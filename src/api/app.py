@@ -6,6 +6,8 @@ import logging
 import uuid
 from fastapi.middleware.cors import CORSMiddleware
 from pymongo import MongoClient
+
+from bot.bot import append_message
 from configuration.config import (
     MONGO_DB_NAME, MONGO_DB_USERNAME, MONGO_DB_PASSWORD
 )
@@ -68,8 +70,6 @@ async def create_new_session(user_id: str):
         conversations.insert_one({
             "session_id": new_session_id,
             "user_id": user_id,
-            "sender": "user",
-            "message": "Initialization",
             "timestamp": datetime.now(timezone.utc)
         })
         return NewSessionResponse(session_id=new_session_id)
@@ -106,6 +106,7 @@ class MessageInfo(BaseModel):
     sender: str
     message: str
     timestamp: datetime
+    sources: List[str]
 
 @app.get("/session_messages/{session_id}", response_model=List[MessageInfo])
 async def get_session_messages(session_id: str):
@@ -118,7 +119,8 @@ async def get_session_messages(session_id: str):
             MessageInfo(
                 sender=msg["sender"],
                 message=msg["message"],
-                timestamp=msg["timestamp"]
+                timestamp=msg["timestamp"],
+                sources=msg["sources"]
             )
             for msg in session_doc.get("messages", [])
         ]

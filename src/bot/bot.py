@@ -27,12 +27,13 @@ mongo_db = mongo_client[MONGO_DB_NAME]
 conversations = mongo_db.conversations
 
 
-def append_message(session_id: str, sender: str, message: str, user_id: str):
+def append_message(session_id: str, sender: str, message: str, user_id: str, sources: List[str]):
     """Append a message to the messages array inside the session document."""
     message_doc = {
         "sender": sender,
         "message": message,
-        "timestamp": datetime.now(timezone.utc)
+        "timestamp": datetime.now(timezone.utc),
+        "sources": sources
     }
     result = conversations.update_one(
         {"session_id": session_id, "user_id": user_id},
@@ -154,7 +155,7 @@ def chatbot_query(query: str, session_id: str, user_id: str):
         logger.debug(f"Session ID: {session_id}, User ID: {user_id}")
 
     try:
-        append_message(session_id, sender="user", message=query, user_id=user_id)
+        append_message(session_id, sender="user", message=query, user_id=user_id, sources=[])
     except Exception as e:
         logger.error(f"Error appending user message: {e}")
         raise
@@ -184,7 +185,7 @@ def chatbot_query(query: str, session_id: str, user_id: str):
         response_with_sources = "Error"
 
     try:
-        append_message(session_id, sender="bot", message=response_with_sources, user_id=user_id)
+        append_message(session_id, sender="bot", message=response, user_id=user_id, sources=sources)
     except Exception as e:
         logger.error(f"Error appending bot message: {e}")
 
