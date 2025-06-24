@@ -20,6 +20,7 @@ def retrieve_documents(query: str) -> List[Document]:
         with_payload=True,
         with_vectors=False
     )
+    print(search_results)
 
     return [
         Document(
